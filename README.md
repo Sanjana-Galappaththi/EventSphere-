@@ -1,6 +1,6 @@
-# EventSphere - Multi-Agent Venue Booking System
+## EventSphere — Autonomous Multi-Agent Venue & Ticketing Platform
 
-EventSphere is a mobile-friendly venue booking and digital ticketing platform built with FastAPI. Every booking decision is handled by cooperating software agents communicating via JSON messages through a custom Message Bus.
+Built on FastAPI, EventSphere is a responsive venue booking and digital event ticketing system. Its core architecture relies on an internal custom Message Bus, allowing autonomous software agents to exchange structured JSON messages and handle booking workflows collaboratively.
 
 ## Architecture & Agents
 - **VenueAgent**: Checks for time clashes (2-hour turnaround buffer) and proposes alternatives for private hires.

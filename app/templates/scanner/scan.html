@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Gate Scanner - EventSphere{% endblock %}
+{% block head %}
+<style>
+  #qr-reader {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .scan-result-card {
+    transition: all 0.3s ease;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 520px;">
+
+  <div class="text-center mb-4">
+    <div class="d-inline-flex p-3 rounded-circle bg-warning bg-opacity-10 text-warning mb-2">
+      <i class="bi bi-qr-code-scan fs-1"></i>
+    </div>
+    <h3 class="fw-bold mb-1">Entrance Ticket Scanner</h3>
+    <p class="text-muted small">Gate Staff &bull; TicketAgent Live Verification</p>
+  </div>
+
+  <!-- Event Scope Filter (Requirement 5.c: Reject ticket for another event) -->
+  <div class="card p-3 border-0 shadow-sm mb-3">
+    <label class="form-label small fw-semibold mb-1">
+      <i class="bi bi-funnel-fill text-primary me-1"></i>Admission Filter (Gate Event):
+    </label>
+    <select id="eventSelect" class="form-select form-select-sm">
+      <option value="">Any Active Event (Universal Gate)</option>
+      {% for ev in events %}
+      <option value="{{ ev.id }}">{{ ev.title }} ({{ ev.venue.name }})</option>
+      {% endfor %}
+    </select>
+    <div class="form-text" style="font-size:0.75rem;">Select an event to reject tickets purchased for other events.</div>
+  </div>
+
+  <!-- Real-Time Camera Scanner View (Requirement 5.b: Phone camera scanning) -->
+  <div class="card p-3 border-0 shadow-sm mb-3 text-center">
+    <div id="qr-reader" class="mb-2"></div>
+    <div class="small text-muted" id="cameraStatus">
+      <i class="bi bi-camera me-1"></i>Align attendee's phone QR code within viewfinder
+    </div>
+  </div>
+
+  <!-- Manual Code Entry Fallback (Requirement 5.b: Manual code entry fallback) -->
+  <div class="card p-3 border-0 shadow-sm mb-4">
+    <label class="form-label small fw-semibold mb-1">
+      <i class="bi bi-keyboard text-secondary me-1"></i>Manual Token Entry (Fallback):
+    </label>
+    <form id="manualScanForm" class="d-flex gap-2">
+      <input type="text" id="manualCodeInput" class="form-control form-control-sm font-monospace" placeholder="Paste 32-char token..." required>
+      <button type="submit" class="btn btn-primary btn-sm px-3">
+        Verify
+      </button>
+    </form>
+  </div>
+
+  <!-- Scan Result Display (Requirement 5.c: Admitted once only, clear rejection reasons) -->
+  <div id="scanResult" style="display: none;"></div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- HTML5-QRCODE Library for Mobile Camera Scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+let html5QrcodeScanner = null;
+let isProcessing = false;
+
+function showOutcome(data) {
+  const container = document.getElementById('scanResult');
+  container.style.display = 'block';
+
+  if (data.success && data.result === 'admitted') {
+    // Green Admission Card
+    container.innerHTML = `
+      <div class="card p-4 border-2 border-success bg-success bg-opacity-10 text-center scan-result-card shadow">
+        <div class="text-success display-4 mb-2"><i class="bi bi-check-circle-fill"></i></div>
+        <h4 class="fw-bold text-success mb-1">ADMITTED</h4>
+        <div class="fs-5 fw-bold text-dark mb-1">${data.attendee || 'Guest'}</div>
+        <div class="text-muted small mb-2">${data.event || ''} &bull; <span class="badge bg-dark">${data.category || 'Ticket'}</span></div>
+        <div class="badge bg-success py-1 px-3">Admit Once: Verified by TicketAgent</div>
+      </div>
+    `;
+    playBeep(true);
+  } else {
+    // Red Rejection Card with explicit reason
+    let badgeText = data.result ? data.result.toUpperCase().replace('_', ' ') : 'REJECTED';
+    container.innerHTML = `
+      <div class="card p-4 border-2 border-danger bg-danger bg-opacity-10 text-center scan-result-card shadow">
+        <div class="text-danger display-4 mb-2"><i class="bi bi-x-octagon-fill"></i></div>
+        <h4 class="fw-bold text-danger mb-1">ENTRY REJECTED</h4>
+        <div class="badge bg-danger py-1 px-3 mb-2">${badgeText}</div>
+        <p class="text-dark fw-semibold mb-1">${data.reason || 'Verification failed.'}</p>
+        <div class="small text-muted">TicketAgent Refused Admission</div>
+      </div>
+    `;
+    playBeep(false);
+  }
+
+  // Auto clear feedback after 5 seconds to prepare for next attendee
+  setTimeout(() => {
+    isProcessing = false;
+  }, 2500);
+}
+
+async function verifyToken(code) {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  const eventId = document.getElementById('eventSelect').value;
+  const formData = new FormData();
+  formData.append('qr_code', code.trim());
+  if (eventId) {
+    formData.append('event_id', eventId);
+  }
+
+  try {
+    const res = await fetch('/scanner/scan', {
+      method: 'POST',
+      body: formData
+    });
+    const json = await res.json();
+    showOutcome(json);
+  } catch (err) {
+    showOutcome({ success: false, result: 'network_error', reason: 'Could not contact TicketAgent.' });
+  }
+}
+
+// Manual Form Handler
+document.getElementById('manualScanForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const val = document.getElementById('manualCodeInput').value;
+  if (val) {
+    verifyToken(val);
+    document.getElementById('manualCodeInput').value = '';
+  }
+});
+
+// Camera Audio Feedback
+function playBeep(success) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = success ? 880 : 300;
+    osc.type = success ? 'sine' : 'sawtooth';
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + (success ? 0.2 : 0.4));
+  } catch(e) {}
+}
+
+// Initialize Html5Qrcode on load
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        verifyToken(decodedText);
+      },
+      (error) => {
+        // silent scan progress
+      }
+    ).catch(err => {
+      document.getElementById('cameraStatus').innerHTML = `
+        <span class="text-muted"><i class="bi bi-info-circle me-1"></i>Camera not available or permission denied. Use manual token input above.</span>
+      `;
+    });
+  } catch(e) {
+    document.getElementById('cameraStatus').innerText = 'Manual token entry active.';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Agent Notifications - EventSphere{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 680px;">
+
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1"><i class="bi bi-bell-fill text-primary me-2"></i>Agent Notifications</h2>
+    <p class="text-muted small mb-0">Direct alerts generated autonomously by NotificationAgent in response to booking and waitlist events.</p>
+  </div>
+
+  {% if not user.notifications %}
+  <div class="card p-5 text-center border-0 shadow-sm">
+    <i class="bi bi-bell-slash display-4 text-muted mb-3"></i>
+    <h5 class="fw-bold">No Notifications Yet</h5>
+    <p class="text-muted small mb-0">Whenever an agent confirms a booking, releases waitlisted seats, or resolves a hire request, you'll see alerts here.</p>
+  </div>
+  {% else %}
+
+  <div class="d-flex flex-column gap-2">
+    {% for notif in user.notifications | reverse %}
+    <div class="card p-3 border-0 shadow-sm d-flex flex-row align-items-start gap-3">
+      <div class="p-2 rounded-circle bg-primary bg-opacity-10 text-primary">
+        <i class="bi bi-info-circle-fill fs-5"></i>
+      </div>
+      <div class="flex-grow-1">
+        <p class="mb-1 text-dark">{{ notif.message }}</p>
+        <div class="text-muted small" style="font-size:0.75rem;">
+          <i class="bi bi-clock me-1"></i>{{ notif.created_at.strftime('%a, %d %b %Y &bull; %H:%M') }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}

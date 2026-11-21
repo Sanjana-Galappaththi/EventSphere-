@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}EventSphere - Multi-Agent Ticketing & Venue Booking{% endblock %}</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-subtle: #eef2ff;
+      --surface: #ffffff;
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Mobile First Nav & Layout */
+    .navbar {
+      background: rgba(15, 23, 42, 0.95) !important;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.75rem 0;
+    }
+    .navbar-brand {
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      font-size: 1.25rem;
+      color: #fff !important;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .brand-badge {
+      font-size: 0.65rem;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nav-link {
+      color: #cbd5e1 !important;
+      font-weight: 500;
+      font-size: 0.92rem;
+      padding: 0.5rem 0.85rem !important;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-link.special-role {
+      color: #facc15 !important;
+      background: rgba(250, 204, 21, 0.1);
+    }
+
+    /* Card styling */
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Buttons */
+    .btn {
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 0.55rem 1.15rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      border-color: var(--primary-hover);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Performative Badges */
+    .badge-perf-AGREE { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .badge-perf-REFUSE { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .badge-perf-PROPOSE { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-perf-INFORM { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    .badge-perf-REQUEST { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .badge-perf-FAILURE { background: #1e293b; color: #f87171; border: 1px solid #475569; }
+
+    /* Mobile specific responsiveness (375px) */
+    @media (max-width: 576px) {
+      .container {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+      .display-mobile {
+        font-size: 1.6rem !important;
+      }
+      .btn-mobile-full {
+        width: 100%;
+      }
+    }
+
+    footer {
+      margin-top: auto;
+      background: #0f172a;
+      color: #94a3b8;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 2rem 0;
+      font-size: 0.88rem;
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Announcement / Multi-Agent Banner -->
+  <div class="bg-indigo-900 text-white py-1 px-3 text-center small d-flex justify-content-center align-items-center gap-2" style="background:#1e1b4b;">
+    <span class="badge bg-primary" style="font-size: 0.7rem;">Multi-Agent Driven</span>
+    <span class="d-none d-sm-inline">Every booking & venue decision is negotiated in real-time by cooperating AI agents</span>
+    <span class="d-inline d-sm-none">Cooperating Agent Decision Platform</span>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <i class="bi bi-calendar2-range-fill text-primary"></i>
+        <span>EventSphere</span>
+        <span class="brand-badge">MAS</span>
+      </a>
+      
+      <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list fs-2"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          <li class="nav-item">
+            <a class="nav-link" href="/events"><i class="bi bi-compass me-1"></i>Explore Events</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/venues"><i class="bi bi-building me-1"></i>Venues</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/hire"><i class="bi bi-calendar-heart me-1"></i>Private Hire</a>
+          </li>
+          {% if user and user.role.value in ['admin', 'staff'] %}
+          <li class="nav-item">
+            <a class="nav-link special-role" href="/scanner"><i class="bi bi-qr-code-scan me-1"></i>Ticket Scanner</a>
+          </li>
+          {% endif %}
+          {% if user and user.role.value == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link special-role" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Admin Dashboard</a>
+          </li>
+          {% endif %}
+        </ul>
+
+        <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+          {% if user %}
+            <a href="/bookings" class="btn btn-outline-light btn-sm">
+              <i class="bi bi-ticket-perforated"></i>
+              <span class="d-none d-sm-inline">My Tickets</span>
+            </a>
+            <div class="dropdown">
+              <button class="btn btn-dark btn-sm dropdown-toggle border-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle text-primary"></i>
+                <span>{{ user.name.split()[0] }}</span>
+                <span class="badge bg-secondary ms-1" style="font-size:0.7rem;">{{ user.role.value }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                <li class="dropdown-header">Signed in as <strong>{{ user.email }}</strong></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/bookings"><i class="bi bi-ticket me-2"></i>My Bookings</a></li>
+                <li><a class="dropdown-item" href="/hire"><i class="bi bi-calendar-event me-2"></i>My Venue Hires</a></li>
+                <li><a class="dropdown-item" href="/notifications"><i class="bi bi-bell me-2"></i>Agent Notifications</a></li>
+                {% if user.role.value == 'admin' %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-warning" href="/events/new"><i class="bi bi-plus-circle me-2"></i>Create Event</a></li>
+                <li><a class="dropdown-item text-warning" href="/venues/new"><i class="bi bi-building-add me-2"></i>Create Venue</a></li>
+                <li><a class="dropdown-item text-warning" href="/hire/admin"><i class="bi bi-clipboard-check me-2"></i>Manage Hires</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <a href="/auth/login" class="btn btn-outline-light btn-sm">Log in</a>
+            <a href="/auth/register" class="btn btn-primary btn-sm">Sign up</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash/Query Notifications Alert -->
+  <div class="container mt-3">
+    {% if request.query_params.get('registered') %}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>Registration successful! You can now log in.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('booked') %}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+      <i class="bi bi-ticket-detailed-fill me-2"></i><strong>Tickets Reserved!</strong> BookingAgent verified capacity and generated digital QR tickets.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('cancelled') %}
+    <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+      <i class="bi bi-arrow-counterclockwise me-2"></i>Booking cancelled. BookingAgent calculated refund policy and notified WaitlistAgent.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('waitlisted') %}
+    <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+      <i class="bi bi-hourglass-split me-2"></i>Added to waitlist! WaitlistAgent will automatically hold freed seats for you.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('submitted') %}
+    <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+      <i class="bi bi-send-check me-2"></i>Venue hire request submitted! VenueAgent evaluated turnaround buffer, availability, and pricing.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row g-4 align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <div class="fw-bold text-white fs-6 mb-1">
+            <i class="bi bi-calendar2-range-fill text-primary me-2"></i>EventSphere Digital Platform
+          </div>
+          <p class="mb-0 small text-slate-400">
+            IT4123 Agent Based Computing Practical (ICA 02) &bull; Autonomous MAS Architecture
+          </p>
+        </div>
+        <div class="col-md-6 text-center text-md-end">
+          <div class="small text-slate-400">
+            Agents active: <code>VenueAgent</code> &bull; <code>BookingAgent</code> &bull; <code>TicketAgent</code> &bull; <code>WaitlistAgent</code> &bull; <code>NotificationAgent</code>
+          </div>
+          <div class="mt-1 small">
+            <span class="text-success"><i class="bi bi-shield-check me-1"></i>Simulated Payments Only</span> &bull; 
+            <span class="text-info"><i class="bi bi-phone me-1"></i>375px Mobile Responsive</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

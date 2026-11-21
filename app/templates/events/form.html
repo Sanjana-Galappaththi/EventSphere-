@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Create Event - EventSphere{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 760px;">
+  
+  <div class="mb-4">
+    <a href="/events" class="text-decoration-none small text-muted">&larr; Back to Events</a>
+    <h2 class="fw-bold mt-2">Publish a Campus Event</h2>
+    <p class="text-muted small">VenueAgent will review slot availability with a 30-minute turnaround buffer.</p>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-danger py-2 small d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <div>{{ error }}</div>
+  </div>
+  {% endif %}
+
+  <div class="card p-4 border-0 shadow-sm">
+    <form method="post" action="/events/new">
+      
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Event Title</label>
+        <input type="text" name="title" class="form-control" placeholder="Annual University Jazz Festival" required>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label class="form-label small fw-semibold">Category</label>
+          <input type="text" name="category" class="form-control" placeholder="Concert, Seminar, Workshop..." required>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label small fw-semibold">Target Venue</label>
+          <select name="venue_id" class="form-select" required>
+            <option value="">Select Venue...</option>
+            {% for v in venues %}
+            <option value="{{ v.id }}">{{ v.name }} (Capacity: {{ v.capacity }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label class="form-label small fw-semibold">Start Date & Time</label>
+          <input type="datetime-local" name="start_time" class="form-control" required>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label small fw-semibold">End Date & Time</label>
+          <input type="datetime-local" name="end_time" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Provide event details, schedule, and speaker information..."></textarea>
+      </div>
+
+      <!-- Ticket Categories Dynamic Builder -->
+      <div class="mb-4 pt-3 border-top">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h6 class="fw-bold mb-0">Ticket Categories</h6>
+            <div class="text-muted small" style="font-size:0.75rem;">Total quantity cannot exceed venue capacity (validated by system).</div>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addTicketRow()">
+            <i class="bi bi-plus-circle me-1"></i> Add Category
+          </button>
+        </div>
+
+        <div id="ticket-rows-container">
+          <div class="row g-2 align-items-center mb-2 ticket-row">
+            <div class="col-5">
+              <input type="text" name="tc_names" class="form-control form-control-sm" placeholder="e.g. Standard" required>
+            </div>
+            <div class="col-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" name="tc_prices" class="form-control" placeholder="15.00" required>
+              </div>
+            </div>
+            <div class="col-3">
+              <input type="number" name="tc_quantities" class="form-control form-control-sm" placeholder="Quantity" min="1" required>
+            </div>
+            <div class="col-1 text-center">
+              <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="removeTicketRow(this)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+        <button type="submit" name="action" value="draft" class="btn btn-outline-secondary">
+          <i class="bi bi-save"></i> Save as Draft
+        </button>
+        <button type="submit" name="action" value="publish" class="btn btn-primary">
+          <i class="bi bi-send-check"></i> Validate with VenueAgent & Publish
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+function addTicketRow() {
+  const container = document.getElementById('ticket-rows-container');
+  const div = document.createElement('div');
+  div.className = 'row g-2 align-items-center mb-2 ticket-row';
+  div.innerHTML = `
+    <div class="col-5">
+      <input type="text" name="tc_names" class="form-control form-control-sm" placeholder="e.g. VIP / Student" required>
+    </div>
+    <div class="col-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text">$</span>
+        <input type="number" step="0.01" name="tc_prices" class="form-control" placeholder="25.00" required>
+      </div>
+    </div>
+    <div class="col-3">
+      <input type="number" name="tc_quantities" class="form-control form-control-sm" placeholder="Quantity" min="1" required>
+    </div>
+    <div class="col-1 text-center">
+      <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="removeTicketRow(this)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function removeTicketRow(btn) {
+  const rows = document.querySelectorAll('.ticket-row');
+  if (rows.length > 1) {
+    btn.closest('.ticket-row').remove();
+  } else {
+    alert('At least one ticket category is required.');
+  }
+}
+</script>
+{% endblock %}

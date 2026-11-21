@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Private Venue Hire - EventSphere{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1"><i class="bi bi-calendar-heart-fill text-primary me-2"></i>Private Venue Hire</h2>
+    <p class="text-muted small mb-0">Book an entire university venue for farewells, society receptions, or club banquets.</p>
+  </div>
+
+  <div class="row g-4">
+    
+    <!-- Submission Form Column -->
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 border-0 shadow-sm">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-send-fill text-primary"></i> Request Venue Space
+        </h5>
+
+        {% if request.query_params.get('submitted') %}
+        <div class="alert alert-success py-2 small d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-check-circle-fill fs-5"></i>
+          <div>
+            <strong>Request Submitted:</strong> VenueAgent evaluated your request! See the outcome in "My Hire Requests" on the right.
+          </div>
+        </div>
+        {% endif %}
+        {% if request.query_params.get('error') %}
+        <div class="alert alert-danger py-2 small d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+          <div>
+            <strong>Error:</strong> {{ request.query_params.get('error') }}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-robot fs-5"></i>
+          <div>
+            <strong>Autonomous Evaluation:</strong> VenueAgent automatically checks for clashes (with 30m turnaround), confirms routine requests (&le;90% capacity), prices weekend rates, and calculates alternatives via <code>PROPOSE</code>.
+          </div>
+        </div>
+
+        <form method="post" action="/hire/request">
+          
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Target Venue</label>
+            <select name="venue_id" class="form-select" required>
+              <option value="">Select a hireable space...</option>
+              {% for v in venues %}
+              <option value="{{ v.id }}" {% if request.query_params.get('venue_id')|int == v.id %}selected{% endif %}>
+                {{ v.name }} (${{ "%.2f"|format(v.hourly_hire_rate) }}/hr &bull; Cap: {{ v.capacity }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Start Date & Time</label>
+              <input type="datetime-local" name="start_time" class="form-control" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">End Date & Time</label>
+              <input type="datetime-local" name="end_time" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Occasion / Purpose</label>
+            <input type="text" name="purpose" class="form-control" placeholder="e.g. Computer Science Society Annual Dinner" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Expected Guest Count</label>
+            <input type="number" name="guest_count" class="form-control" placeholder="e.g. 80" min="1" required>
+            <div class="form-text" style="font-size:0.75rem;">Requests exceeding 90% of capacity are escalated to admin for review.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2">
+            <i class="bi bi-send-check"></i> Submit to VenueAgent
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- User's Existing Requests Column -->
+    <div class="col-12 col-lg-6">
+      <div class="card p-4 border-0 shadow-sm h-100">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-clock-history text-secondary"></i> My Hire Requests
+        </h5>
+
+        {% if not my_requests %}
+        <div class="text-center py-5 text-muted small">
+          <i class="bi bi-inbox display-4 mb-2 d-block"></i>
+          You have not submitted any venue hire requests yet.
+        </div>
+        {% else %}
+        <div class="d-flex flex-column gap-3">
+          {% for req in my_requests %}
+          <div class="p-3 border rounded-3 bg-light">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+              <h6 class="fw-bold mb-0">{{ req.venue.name }}</h6>
+              
+              {% if req.status.value == 'confirmed' %}
+              <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>CONFIRMED</span>
+              {% elif req.status.value == 'escalated' %}
+              <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>ESCALATED TO ADMIN</span>
+              {% elif req.status.value == 'rejected' %}
+              <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>REJECTED</span>
+              {% else %}
+              <span class="badge bg-secondary">PENDING</span>
+              {% endif %}
+            </div>
+
+            <div class="small text-muted mb-2">
+              {{ req.start_time.strftime('%a, %d %b %Y &bull; %H:%M') }} - {{ req.end_time.strftime('%H:%M') }}
+            </div>
+
+            <div class="small mb-2">
+              Purpose: <strong>{{ req.purpose }}</strong> &bull; Guests: <strong>{{ req.guest_count }}</strong>
+            </div>
+
+            {% if req.total_price %}
+            <div class="small fw-semibold text-success">
+              Calculated Price: ${{ "%.2f"|format(req.total_price) }}
+            </div>
+            {% endif %}
+
+            {% if req.admin_note %}
+            <div class="small text-danger mt-1">
+              Admin Note: {{ req.admin_note }}
+            </div>
+            {% endif %}
+
+            <!-- Alternatives proposed by VenueAgent (Part A / Compulsory Requirement) -->
+            {% if req.alternatives %}
+            <div class="mt-2 p-2 bg-white rounded border border-warning">
+              <div class="small fw-bold text-dark mb-1">
+                <i class="bi bi-lightbulb-fill text-warning me-1"></i>VenueAgent Suggested Alternative Slots:
+              </div>
+              <ul class="mb-0 ps-3 small text-muted">
+                <li class="font-monospace">{{ req.alternatives }}</li>
+              </ul>
+            </div>
+            {% endif %}
+
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

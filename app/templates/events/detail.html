@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} - EventSphere{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 820px;">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="/events" class="text-decoration-none">Events</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ event.title }}</li>
+    </ol>
+  </nav>
+
+  <!-- Event Header Banner -->
+  <div class="card border-0 shadow-sm overflow-hidden mb-4">
+    {% if event.venue.image_url %}
+    <img src="{{ event.venue.image_url }}" alt="{{ event.venue.name }}" style="max-height: 280px; width: 100%; object-fit: cover;">
+    {% else %}
+    <div class="p-4 text-center bg-dark text-white" style="background: linear-gradient(135deg, #1e1b4b, #3730a3);">
+      <i class="bi bi-calendar2-event display-3 text-indigo-300"></i>
+    </div>
+    {% endif %}
+
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <span class="badge bg-primary fs-6">{{ event.category }}</span>
+        {% if event.status.value == 'published' %}
+        <span class="badge bg-success">Status: Published</span>
+        {% elif event.status.value == 'draft' %}
+        <span class="badge bg-secondary">Status: Draft</span>
+        {% elif event.status.value == 'cancelled' %}
+        <span class="badge bg-danger">Status: CANCELLED</span>
+        {% endif %}
+      </div>
+
+      <h1 class="fw-bold mb-3">{{ event.title }}</h1>
+
+      <div class="row g-3 text-muted small mb-4">
+        <div class="col-sm-6 d-flex align-items-center gap-2">
+          <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+          <div>
+            <div class="fw-bold text-dark">{{ event.venue.name }}</div>
+            <div>{{ event.venue.location }} (Cap: {{ event.venue.capacity }})</div>
+          </div>
+        </div>
+        <div class="col-sm-6 d-flex align-items-center gap-2">
+          <i class="bi bi-clock-fill text-primary fs-5"></i>
+          <div>
+            <div class="fw-bold text-dark">{{ event.start_time.strftime('%A, %d %B %Y') }}</div>
+            <div>{{ event.start_time.strftime('%H:%M') }} &ndash; {{ event.end_time.strftime('%H:%M') }}</div>
+          </div>
+        </div>
+      </div>
+
+      {% if event.description %}
+      <div class="border-top pt-3">
+        <h6 class="fw-bold text-dark mb-2">About This Event</h6>
+        <p class="text-secondary mb-0" style="white-space: pre-line;">{{ event.description }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Admin Actions (Publish / Cancel) -->
+      {% if user and user.role.value == 'admin' %}
+      <div class="border-top pt-3 mt-4 d-flex gap-2 flex-wrap">
+        {% if event.status.value == 'draft' %}
+        <form method="post" action="/events/{{ event.id }}/publish">
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-send-check"></i> Publish Event
+          </button>
+        </form>
+        {% endif %}
+        {% if event.status.value == 'published' %}
+        <form method="post" action="/events/{{ event.id }}/cancel" onsubmit="return confirm('Cancelling this event will trigger BookingAgent to process 100% full refunds for all attendees. Proceed?');">
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-x-octagon"></i> Cancel Event & Refund All
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Ticket Selection & Booking Section -->
+  <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-ticket-perforated-fill text-primary"></i> Tickets & Reservation
+  </h4>
+
+  {% if event.status.value == 'cancelled' %}
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-octagon-fill fs-4"></i>
+    <div>
+      <strong>This event has been cancelled.</strong> All existing reservations have been refunded by BookingAgent. No new bookings can be made.
+    </div>
+  </div>
+  {% else %}
+  
+  <div class="row g-3 mb-4">
+    {% for cat in event.ticket_categories %}
+    {% set available = cat.quantity - cat.sold %}
+    <div class="col-12">
+      <div class="card p-3 shadow-sm border {% if available <= 0 %}border-warning bg-light{% else %}border-0{% endif %}">
+        <div class="row align-items-center g-3">
+          
+          <div class="col-12 col-md-5">
+            <h5 class="fw-bold mb-1">{{ cat.name }}</h5>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-5 fw-bold text-primary">
+                {% if cat.price == 0 %}Free{% else %}${{ "%.2f"|format(cat.price) }}{% endif %}
+              </span>
+              <span class="text-muted small">&bull;</span>
+              {% if available > 0 %}
+              <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                {{ available }} of {{ cat.quantity }} remaining
+              </span>
+              {% else %}
+              <span class="badge bg-danger">Sold Out</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-12 col-md-7">
+            {% if available > 0 %}
+              {% if user %}
+              <!-- Active Booking Form handled by BookingAgent -->
+              <form method="post" action="/bookings/book" class="d-flex align-items-center gap-2 justify-content-md-end">
+                <input type="hidden" name="ticket_category_id" value="{{ cat.id }}">
+                <div class="d-flex align-items-center gap-1">
+                  <label class="small text-muted">Qty:</label>
+                  <select name="quantity" class="form-select form-select-sm" style="width: 70px;">
+                    {% for q in range(1, [available + 1, 7]|min) %}
+                    <option value="{{ q }}">{{ q }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm px-3">
+                  <i class="bi bi-cart-check"></i> Book Now
+                </button>
+              </form>
+              <div class="text-md-end text-muted small mt-1" style="font-size:0.75rem;">
+                <i class="bi bi-shield-lock me-1"></i>Simulated payment &bull; Max 6 tickets limit enforced by BookingAgent
+              </div>
+              {% else %}
+              <div class="text-md-end">
+                <a href="/auth/login" class="btn btn-outline-primary btn-sm">
+                  Sign in to Book Tickets
+                </a>
+              </div>
+              {% endif %}
+            {% else %}
+              <!-- Category is Sold Out: Waitlist Option handled by WaitlistAgent -->
+              <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-end gap-2">
+                <span class="small text-muted text-md-end">Seats are currently full.</span>
+                {% if user %}
+                <form method="post" action="/bookings/waitlist" class="d-inline">
+                  <input type="hidden" name="ticket_category_id" value="{{ cat.id }}">
+                  <input type="hidden" name="quantity" value="1">
+                  <button type="submit" class="btn btn-warning btn-sm fw-semibold">
+                    <i class="bi bi-hourglass-split"></i> Join Waitlist
+                  </button>
+                </form>
+                {% else %}
+                <a href="/auth/login" class="btn btn-outline-secondary btn-sm">Sign in for Waitlist</a>
+                {% endif %}
+              </div>
+              <div class="text-md-end text-muted small mt-1" style="font-size:0.75rem;">
+                WaitlistAgent holds released seats for 15 mins on an autonomous timer sweep.
+              </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+  <!-- User's Existing Tickets for This Event -->
+  {% if user_bookings %}
+  <div class="card p-3 border-0 bg-primary bg-opacity-10 mb-4">
+    <h6 class="fw-bold text-primary mb-2"><i class="bi bi-qr-code me-1"></i>You Have Reserved Tickets for this Event!</h6>
+    <div class="d-flex flex-wrap gap-2">
+      {% for b in user_bookings %}
+        {% for t in b.tickets %}
+        <a href="/bookings/ticket/{{ t.id }}" class="btn btn-light btn-sm border shadow-sm">
+          <i class="bi bi-ticket-detailed text-primary me-1"></i>Ticket #{{ t.id }} ({{ t.status.value }})
+        </a>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

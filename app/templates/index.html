@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Welcome to EventSphere - Autonomous Event & Venue MAS{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<div class="py-5" style="background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 100%); color: white;">
+  <div class="container text-center py-4">
+    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4);">
+      <span class="badge bg-primary">ICA 02 Practical</span>
+      <span class="small text-indigo-200">Autonomous Multi-Agent Venue & Digital Ticketing</span>
+    </div>
+    
+    <h1 class="display-4 fw-extrabold mb-3 tracking-tight display-mobile">
+      Campus Events & Venues,<br class="d-none d-sm-inline">
+      <span style="background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Decided by Cooperating Agents.
+      </span>
+    </h1>
+    
+    <p class="lead text-slate-300 mx-auto mb-4" style="max-width: 650px; font-size: 1.15rem;">
+      No central database controller: <strong>VenueAgent</strong> enforces clash buffers, <strong>BookingAgent</strong> prevents overselling with ACID locking, <strong>TicketAgent</strong> validates unguessable QR passes, and <strong>WaitlistAgent</strong> sweeps releases on autonomous timers.
+    </p>
+
+    <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+      <a href="/events" class="btn btn-primary btn-lg px-4 shadow">
+        <i class="bi bi-ticket-perforated-fill"></i> Browse Events
+      </a>
+      <a href="/hire" class="btn btn-outline-light btn-lg px-4">
+        <i class="bi bi-building"></i> Request Venue Hire
+      </a>
+    </div>
+
+    <!-- Demo Accounts Quick Pill for Viva Examiner -->
+    <div class="mt-4 p-3 rounded-3 mx-auto" style="max-width: 600px; background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.2);">
+      <div class="small fw-bold text-warning mb-1"><i class="bi bi-shield-lock me-1"></i>Viva Examiner Demo Logins (Password for all: <code>password123</code>):</div>
+      <div class="d-flex justify-content-center gap-3 flex-wrap small text-slate-300">
+        <span>Admin: <code>admin@eventsphere.edu</code></span>
+        <span>Staff: <code>staff@eventsphere.edu</code></span>
+        <span>Attendee: <code>attendee@eventsphere.edu</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Architecture & Agents Section -->
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <h5 class="text-primary fw-bold text-uppercase tracking-wider">Multi-Agent System Architecture</h5>
+    <h2 class="fw-bold">How the 5 Autonomous Agents Cooperate</h2>
+    <p class="text-muted">Structured FIPA performatives: <code>REQUEST</code>, <code>AGREE</code>, <code>REFUSE</code>, <code>PROPOSE</code>, <code>INFORM</code>, <code>FAILURE</code></p>
+  </div>
+
+  <div class="row g-4">
+    <!-- VenueAgent Card -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 p-4 card-hover">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-primary bg-opacity-10 text-primary fs-3">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">VenueAgent</h5>
+            <small class="text-muted">Goal: Zero Calendar Clashes</small>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Guards every space calendar. Enforces a <strong>30-minute turnaround cleaning buffer</strong>, evaluates private hire requests against capacity, computes weekend peak surcharges (+50%), and formulates alternative slots via <code>PROPOSE</code> when dates clash.
+        </p>
+        <div class="mt-auto pt-2 border-top">
+          <span class="badge bg-light text-dark border">Turnaround Buffer</span>
+          <span class="badge bg-light text-dark border">Peak Pricing</span>
+          <span class="badge bg-light text-dark border">Counter-Proposals</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BookingAgent Card -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 p-4 card-hover">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-success bg-opacity-10 text-success fs-3">
+            <i class="bi bi-shield-shaded"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">BookingAgent</h5>
+            <small class="text-muted">Goal: Fair, Zero-Overselling</small>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Applies strict limits (&le; 6 tickets). Uses database row-locking (<code>with_for_update</code>) to ensure two users booking the final seat simultaneously never oversell. Computes tiered refund rules (&ge; 7 days = 100%, &lt; 7 days = 50%) and triggers automatic full refunds on cancellations.
+        </p>
+        <div class="mt-auto pt-2 border-top">
+          <span class="badge bg-light text-dark border">ACID Locking</span>
+          <span class="badge bg-light text-dark border">Refund Policy</span>
+          <span class="badge bg-light text-dark border">Event Cascade</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TicketAgent Card -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 p-4 card-hover">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-info bg-opacity-10 text-info fs-3">
+            <i class="bi bi-qr-code"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">TicketAgent</h5>
+            <small class="text-muted">Goal: Admit Exactly Once</small>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Generates unguessable 256-bit cryptographically random tokens and renders scannable QR passes. Enforces check-in windows (-2h to +1h). Rejects duplicate scans with explicit reasons and detects potential fraud via suspicious repeat scan thresholds.
+        </p>
+        <div class="mt-auto pt-2 border-top">
+          <span class="badge bg-light text-dark border">Unguessable QR</span>
+          <span class="badge bg-light text-dark border">Check-in Windows</span>
+          <span class="badge bg-light text-dark border">Anti-Fraud Detection</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WaitlistAgent Card -->
+    <div class="col-md-6 col-lg-6">
+      <div class="card h-100 p-4 card-hover">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-warning bg-opacity-10 text-warning fs-3">
+            <i class="bi bi-alarm"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">WaitlistAgent (Proactive Autonomous Timer)</h5>
+            <small class="text-muted">Goal: Fair Seat Re-allocation</small>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Maintains persistent FIFO waiting queues. When seats are freed, it places <strong>15-minute exclusive holds</strong>. Running on an autonomous background timer (APScheduler) without human intervention, it proactively sweeps expired holds and cascades seats to the next waiting customer.
+        </p>
+        <div class="mt-auto pt-2 border-top">
+          <span class="badge bg-light text-dark border">Autonomous Timer Sweep</span>
+          <span class="badge bg-light text-dark border">15-Min Timed Holds</span>
+          <span class="badge bg-light text-dark border">FIFO Cascade</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NotificationAgent Card -->
+    <div class="col-md-6 col-lg-6">
+      <div class="card h-100 p-4 card-hover">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-3 p-3 bg-purple bg-opacity-10 text-purple fs-3" style="color: #9333ea;">
+            <i class="bi bi-bell-fill"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">NotificationAgent</h5>
+            <small class="text-muted">Goal: Event-Driven User Dispatch</small>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Acts as a universal listener for all broadcast <code>INFORM</code> and <code>PROPOSE</code> messages. Transforms internal MAS decisions into clear, actionable notifications for attendees, including seat release offers, cancellation refunds, and hire approval statuses.
+        </p>
+        <div class="mt-auto pt-2 border-top">
+          <span class="badge bg-light text-dark border">Reactive Listener</span>
+          <span class="badge bg-light text-dark border">Live Feed</span>
+          <span class="badge bg-light text-dark border">Message Logged</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Features Strip -->
+<div class="bg-light py-5 border-top">
+  <div class="container text-center">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <i class="bi bi-phone fs-1 text-primary mb-2"></i>
+        <h5 class="fw-bold">100% Mobile Ready</h5>
+        <p class="small text-muted mb-0">Designed strictly for phone screens down to 375px width with full camera QR scanning capabilities.</p>
+      </div>
+      <div class="col-md-4">
+        <i class="bi bi-credit-card-2-front fs-1 text-success mb-2"></i>
+        <h5 class="fw-bold">Simulated Payments</h5>
+        <p class="small text-muted mb-0">Zero risk: no real card details collected. Unique transparent payment tokens recorded with each booking transaction.</p>
+      </div>
+      <div class="col-md-4">
+        <i class="bi bi-journal-code fs-1 text-info mb-2"></i>
+        <h5 class="fw-bold">Full Message Traceability</h5>
+        <p class="small text-muted mb-0">Every agent interaction is audited with a unique <code>conversation_id</code> and visible in real time on the Organiser Dashboard.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
